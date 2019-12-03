@@ -1,10 +1,12 @@
-# STM32InterruptsExample
-Repository contains examples of interrupts usage (i.e. for `UART` communication via `DMA`).
+# STM32GameController
+Repository contains code for microcontroller side of simple game controller.
 
-Examples were developed using `STM32F411xE` core and several additional electronic modules.
+Code was developed using `STM32F411xE` core and several additional electronic modules.
 
-# UART transmission using DMA
-Shown example uses DMA for strings processing and sends messages about pressed and released buttons on Nucleo board. Inputs of buttons and output of DMA were both implemented using interrupts of core microprocessor.
+# Description
+Controlling is based on accelerometer readings on microcontroller. Device continuously transmits its measurements to connected computer by using `USART` transmission. Leaning the plate with mounted device leads to change of accelerometer readings and provides an opportunity to interpret them as control events.  
+
+Additionaly, `FIRE` button state is sent alongside with measurements. 
 
 # Dependencies
 * arm-eabi-gcc compiler
