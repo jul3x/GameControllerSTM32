@@ -1,3 +1,5 @@
+#include <delay.h>
+#include <stm32.h>
 #include "configure.h"
 
 void configureUSART()
@@ -20,6 +22,9 @@ void configureNVIC()
     NVIC_EnableIRQ(EXTI15_10_IRQn);
 
     NVIC_EnableIRQ(DMA1_Stream6_IRQn);
+
+    NVIC_EnableIRQ(I2C1_EV_IRQn);
+    NVIC_EnableIRQ(I2C1_ER_IRQn);
 }
 
 void configureDMA()
@@ -41,8 +46,151 @@ void configureI2C() {
     I2C1->CR1 = 0;
 
     I2C1->CR2 = PCLK1_MHZ;
-    I2C1->CCR = PCLK1_HZ / (I2C_SPEED_HZ << 1);
-    I2C1->TRISE = PCLK1_MHZ + 1;
 
     I2C1->CR1 |= I2C_CR1_PE;
+
+    // CTRL_REG1 0
+    {
+        I2C1->CR1 |= I2C_CR1_START;
+        
+        while (!(I2C1->SR1 & I2C_SR1_SB))
+        {
+            continue;
+        }
+
+
+        while (!(I2C1->SR1 & I2C_SR1_ADDR))
+        {
+            continue;
+        }
+        I2C1->SR2;
+
+        uint8_t reg = 0x20;
+        I2C1->DR = reg;
+
+        while (!(I2C1->SR1 & I2C_SR1_TXE))
+        {
+            continue;
+        }
+
+        // ENABLED uint8_t value = 0b01000111; // ENABLED 
+        uint8_t value = 0b00000000;
+        I2C1->DR = value;
+
+        while (!(I2C1->SR1 & I2C_SR1_BTF))
+        {
+            continue;
+        }
+        I2C1->CR1 |= I2C_CR1_STOP;
+    }
+
+    Delay(10000);
+
+    // CTRL_REG3 0
+    {
+        I2C1->CR1 |= I2C_CR1_START;
+        
+        while (!(I2C1->SR1 & I2C_SR1_SB))
+        {
+            continue;
+        }
+
+
+        while (!(I2C1->SR1 & I2C_SR1_ADDR))
+        {
+            continue;
+        }
+        I2C1->SR2;
+
+        uint8_t reg = 0x22;
+        I2C1->DR = reg;
+
+        while (!(I2C1->SR1 & I2C_SR1_TXE))
+        {
+            continue;
+        }
+
+        // ENABLED uint8_t value = 0b01000111; // ENABLED 
+        uint8_t value = 0b00000000;
+        I2C1->DR = value;
+
+        while (!(I2C1->SR1 & I2C_SR1_BTF))
+        {
+            continue;
+        }
+        I2C1->CR1 |= I2C_CR1_STOP;
+    }
+
+    Delay(10000);
+
+    // CTRL_REG1 0
+    {
+        I2C1->CR1 |= I2C_CR1_START;
+        
+        while (!(I2C1->SR1 & I2C_SR1_SB))
+        {
+            continue;
+        }
+
+
+        while (!(I2C1->SR1 & I2C_SR1_ADDR))
+        {
+            continue;
+        }
+        I2C1->SR2;
+
+        uint8_t reg = 0x20;
+        I2C1->DR = reg;
+
+        while (!(I2C1->SR1 & I2C_SR1_TXE))
+        {
+            continue;
+        }
+
+        uint8_t value = 0b01000111; // ENABLED 
+        I2C1->DR = value;
+
+        while (!(I2C1->SR1 & I2C_SR1_BTF))
+        {
+            continue;
+        }
+        I2C1->CR1 |= I2C_CR1_STOP;
+    }
+
+    Delay(10000);
+
+    // CTRL_REG3 0
+    {
+        I2C1->CR1 |= I2C_CR1_START;
+        
+        while (!(I2C1->SR1 & I2C_SR1_SB))
+        {
+            continue;
+        }
+
+
+        while (!(I2C1->SR1 & I2C_SR1_ADDR))
+        {
+            continue;
+        }
+        I2C1->SR2;
+
+        uint8_t reg = 0x22;
+        I2C1->DR = reg;
+
+        while (!(I2C1->SR1 & I2C_SR1_TXE))
+        {
+            continue;
+        }
+
+        // ENABLED uint8_t value = 0b01000111; // ENABLED 
+        uint8_t value = 0b00000100;
+        I2C1->DR = value;
+
+        while (!(I2C1->SR1 & I2C_SR1_BTF))
+        {
+            continue;
+        }
+        I2C1->CR1 |= I2C_CR1_STOP;
+    }
 }
