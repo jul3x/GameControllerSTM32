@@ -59,22 +59,30 @@ int main() {
 
     // Main loop
     for (;;) {
-        // uint8_t table1[] = {0x29};
-        // i2c_send_read(1, 1, table1);
-        // send("X: ");
-        // Delay(1000);
-
-        // send(tab[i2c_value]);
-
-        // uint8_t table2[] = {0x2B};
-        // i2c_send_read(1, 1, table2);
-        // send("Y: ");
-        // Delay(1000);
-
-        // send(tab[i2c_value]);
-        // send("\r\n");
-        
+        uint8_t table1[] = {0x29};
+        i2c_send_read(1, 1, table1);
         send("X: ");
+        Delay(1000);
+
+        send(tab[i2c_value]);
+
+        uint8_t table2[] = {0x2B};
+        i2c_send_read(1, 1, table2);
+        send(" Y: ");
+        Delay(1000);
+
+        send(tab[i2c_value]);
+
+        uint8_t table3[] = {0x2D};
+        i2c_send_read(1, 1, table3);
+        send(" Z: ");
+        Delay(1000);
+
+        send(tab[i2c_value]);
+
+        send("\r\n");
+        
+        //send("X: ");
         Delay(100000);
     }
 
@@ -91,6 +99,8 @@ void i2c_send_read(int bytes_to_send, int bytes_to_receive, uint8_t *buffer) {
 
   I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
   I2C1->CR1 |= I2C_CR1_START;
+  I2C1->CCR = PCLK1_HZ / (I2C_SPEED_HZ << 1);
+  I2C1->TRISE = PCLK1_MHZ + 1;
 }
 
 void send(char *text) {
