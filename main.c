@@ -62,23 +62,18 @@ int main() {
         uint8_t table1[] = {0x29};
         i2c_send_read(1, 1, table1);
         send("X: ");
+       
         Delay(1000);
-
-        send(tab[i2c_value]);
-
+       
         uint8_t table2[] = {0x2B};
         i2c_send_read(1, 1, table2);
         send(" Y: ");
         Delay(1000);
 
-        send(tab[i2c_value]);
-
         uint8_t table3[] = {0x2D};
         i2c_send_read(1, 1, table3);
         send(" Z: ");
         Delay(1000);
-
-        send(tab[i2c_value]);
 
         send("\r\n");
         
@@ -206,6 +201,7 @@ void I2C1_EV_IRQHandler() {
     if (connection_status == 5 && (I2C1->SR1 & I2C_SR1_RXNE)) {
       i2c_to_receive_counter--;
       i2c_value = I2C1->DR;
+      send(tab[i2c_value]);
       i2c_complete = 1;
       return;
     }
