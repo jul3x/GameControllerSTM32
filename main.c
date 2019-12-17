@@ -38,14 +38,26 @@ char *tab[256] = {
     "252", "253", "254", "255"
  };
 
+uint8_t registerX[] = {0x29};
+uint8_t registerY[] = {0x2B};
+uint8_t registerZ[] = {0x2D};
+
 int main() {
     clear(&tx_buffer);
 
     // Initializations
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN | RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_DMA1EN;
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_I2C1EN;
+    RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_I2C1EN | RCC_APB1ENR_TIM3EN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
+    TIM3->CR1 = 0;
+    TIM3->PSC = 400;
+    TIM3->ARR = 1000;
+    TIM3->EGR = TIM_EGR_UG;
+    TIM3->SR = ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF);
+    TIM3->DIER = TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE;
+    TIM3->CCR1 = 333;
+    TIM3->CCR2 = 666;
     __NOP();
 
     // Buttons configuration
@@ -55,30 +67,17 @@ int main() {
     configureI2C();
     configureNVIC();
 
+    TIM3->CR1 |= TIM_CR1_CEN;
+
     __NOP();
 
     // Main loop
     for (;;) {
-        uint8_t table1[] = {0x29};
-        i2c_send_read(1, 1, table1);
-        send("X: ");
-       
-        Delay(1000);
-       
-        uint8_t table2[] = {0x2B};
-        i2c_send_read(1, 1, table2);
-        send(" Y: ");
-        Delay(1000);
-
-        uint8_t table3[] = {0x2D};
-        i2c_send_read(1, 1, table3);
-        send(" Z: ");
-        Delay(1000);
-
-        send("\r\n");
         
-        //send("X: ");
-        Delay(100000);
+      //send("\r\nZ: ");
+      //i2c_send_read(1, 1, registerZ);
+
+      //Delay(100000);
     }
 
     return 0;
@@ -219,7 +218,26 @@ void I2C1_EV_IRQHandler() {
   }
 }
 
-
 void I2C1_ER_IRQHandler() {
   send(" Err");
+}
+
+void TIM3_IRQHandler(void) {
+  uint32_t it_status = TIM3->SR & TIM3->DIER;
+
+  if (it_status & TIM_SR_UIF) {
+    send("\r\nX");
+    i2c_send_read(1, 1, registerX);
+    TIM3->SR = ~TIM_SR_UIF;
+  }
+  if (it_status & TIM_SR_CC1IF) {
+    send("Y");
+    i2c_send_read(1, 1, registerY);
+    TIM3->SR = ~TIM_SR_CC1IF;
+  }
+  if (it_status & TIM_SR_CC2IF) {
+    send("Z");
+    i2c_send_read(1, 1, registerZ);
+    TIM3->SR = ~TIM_SR_CC2IF;
+  }
 }

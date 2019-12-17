@@ -25,6 +25,8 @@ void configureNVIC()
 
     NVIC_EnableIRQ(I2C1_EV_IRQn);
     NVIC_EnableIRQ(I2C1_ER_IRQn);
+
+    NVIC_EnableIRQ(TIM3_IRQn);
 }
 
 void configureDMA()
