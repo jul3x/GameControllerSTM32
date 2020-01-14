@@ -8,6 +8,7 @@
 
 Queue tx_buffer;
 Button fire_button = {13, GPIOC, "P\r\n",  "F\r\n", 0};
+uint8_t is_fire_pressed = 0;
 
 uint8_t* i2c_buffer;
 uint8_t i2c_value = 0;
@@ -73,11 +74,6 @@ int main() {
 
     // Main loop
     for (;;) {
-        
-      //send("\r\nZ: ");
-      //i2c_send_read(1, 1, registerZ);
-
-      //Delay(100000);
     }
 
     return 0;
@@ -119,8 +115,7 @@ void interrupt(uint16_t interr, uint16_t exti_line, Button *button) {
     if (interr & exti_line)
     {
         uint8_t is_released = ((button->gpio->IDR >> button->pin) & 1) ^ button->is_reverse_logic;
-        char *text = is_released ? button->released_str : button->pressed_str;
-        send(text);
+        is_fire_pressed = !is_released;
 
         EXTI->PR = exti_line;
     }
@@ -171,9 +166,6 @@ void I2C1_EV_IRQHandler() {
       i2c_to_send_counter--;
       return;
     }
-
-    send("Error [I2C1_EV_IRQHandler]: Dziwne przerwanie (if)\n\r");
-    return;
   } 
   else if (i2c_to_receive_counter > 0) {
 
@@ -204,12 +196,8 @@ void I2C1_EV_IRQHandler() {
       i2c_complete = 1;
       return;
     }
-
-    //printserial("Error [I2C1_EV_IRQHandler]: Dziwne przerwanie (else if)\n\r");
-    return;
   } 
   else {
-    send("FULL STOP\n\r");
     connection_status = 0;
     I2C1->CR1 |= I2C_CR1_STOP;
     I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
@@ -219,14 +207,14 @@ void I2C1_EV_IRQHandler() {
 }
 
 void I2C1_ER_IRQHandler() {
-  send(" Err");
+  send("Error");
 }
 
 void TIM3_IRQHandler(void) {
   uint32_t it_status = TIM3->SR & TIM3->DIER;
 
   if (it_status & TIM_SR_UIF) {
-    send("\r\nX");
+    send("X");
     i2c_send_read(1, 1, registerX);
     TIM3->SR = ~TIM_SR_UIF;
   }
@@ -238,6 +226,12 @@ void TIM3_IRQHandler(void) {
   if (it_status & TIM_SR_CC2IF) {
     send("Z");
     i2c_send_read(1, 1, registerZ);
+    send("P");
+    if (is_fire_pressed)
+      send("1\r\n");
+    else
+      send("0\r\n");
+
     TIM3->SR = ~TIM_SR_CC2IF;
   }
 }
