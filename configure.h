@@ -16,6 +16,22 @@ void configureNVIC();
 void configureDMA();
 void configureI2C();
 void configureTIM();
-inline void waitTillDeadline(uint16_t condition);
+
+inline void waitTillDeadline(uint16_t condition)
+{
+    int i = 0;
+    const int max_deadline = 1000000;
+
+    while (!(I2C1->SR1 & condition))
+    {
+        ++i;
+
+        if (i > max_deadline)
+        {
+            I2C1->CR1 |= I2C_CR1_STOP;
+            return;
+        }
+    }
+}
 
 #endif

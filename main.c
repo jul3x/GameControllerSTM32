@@ -83,6 +83,14 @@ void i2c_send_read(int bytes_to_send, int bytes_to_receive, uint8_t *buffer)
     I2C1->TRISE = PCLK1_MHZ + 1;
 }
 
+// Helper function for initializing DMA sending
+void DMASend(char *text) 
+{
+    DMA1_Stream6->M0AR = (uint32_t)text;
+    DMA1_Stream6->NDTR = strlen(text);
+    DMA1_Stream6->CR |= DMA_SxCR_EN;
+}
+
 // Function for usage when user wants to send text via USART
 // If DMA is free it sends immediately, otherwise it puts text into queue
 void send(char *text) 
@@ -95,14 +103,6 @@ void send(char *text)
     {
         enqueue(&tx_buffer, text);
     }
-}
-
-// Helper function for initializing DMA sending
-void DMASend(char *text) 
-{
-    DMA1_Stream6->M0AR = (uint32_t)text;
-    DMA1_Stream6->NDTR = strlen(text);
-    DMA1_Stream6->CR |= DMA_SxCR_EN;
 }
 
 // Helper function for buttons readings
