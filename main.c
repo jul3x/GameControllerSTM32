@@ -51,14 +51,6 @@ int main() {
     RCC->APB1ENR |= RCC_APB1ENR_USART2EN | RCC_APB1ENR_I2C1EN | RCC_APB1ENR_TIM3EN;
     RCC->APB2ENR |= RCC_APB2ENR_SYSCFGEN;
 
-    TIM3->CR1 = 0;
-    TIM3->PSC = 400;
-    TIM3->ARR = 1000;
-    TIM3->EGR = TIM_EGR_UG;
-    TIM3->SR = ~(TIM_SR_UIF | TIM_SR_CC1IF | TIM_SR_CC2IF);
-    TIM3->DIER = TIM_DIER_UIE | TIM_DIER_CC1IE | TIM_DIER_CC2IE;
-    TIM3->CCR1 = 333;
-    TIM3->CCR2 = 666;
     __NOP();
 
     // Buttons configuration
@@ -67,10 +59,7 @@ int main() {
     configureDMA();
     configureI2C();
     configureNVIC();
-
-    TIM3->CR1 |= TIM_CR1_CEN;
-
-    __NOP();
+    configureTIM();
 
     // Main loop
     for (;;) {

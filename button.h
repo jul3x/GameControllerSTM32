@@ -4,7 +4,6 @@
 #include <stm32.h>
 #include <gpio.h>
 
-// Button functions
 typedef struct {
     uint16_t pin;
     GPIO_TypeDef * gpio;

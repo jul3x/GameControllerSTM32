@@ -15,5 +15,7 @@ void configureUSART();
 void configureNVIC();
 void configureDMA();
 void configureI2C();
+void configureTIM();
+inline void waitTillDeadline(uint16_t condition);
 
 #endif

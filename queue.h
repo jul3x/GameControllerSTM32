@@ -1,10 +1,12 @@
 #ifndef QUEUE_H_INCLUDED
 #define QUEUE_H_INCLUDED
 
+#define QUEUE_MAX_SIZE 4096
+
 typedef struct SQueue {
     int head;
     int tail;
-    char *buffer[4096];
+    char *buffer[QUEUE_MAX_SIZE];
 } Queue;
 
 void clear(Queue *queue);
