@@ -43,7 +43,8 @@ uint8_t registerX[] = {0x29};
 uint8_t registerY[] = {0x2B};
 uint8_t registerZ[] = {0x2D};
 
-int main() {
+int main() 
+{
     clear(&tx_buffer);
 
     // Initializations
@@ -53,7 +54,6 @@ int main() {
 
     __NOP();
 
-    // Buttons configuration
     configure(&fire_button);
     configureUSART();
     configureDMA();
@@ -62,29 +62,32 @@ int main() {
     configureTIM();
 
     // Main loop
-    for (;;) {
-    }
+    for (;;) {}
 
     return 0;
 }
 
-void i2c_send_read(int bytes_to_send, int bytes_to_receive, uint8_t *buffer) {
-  i2c_buffer = buffer;
-  i2c_to_send_counter = bytes_to_send;
-  i2c_to_receive_counter = bytes_to_receive;
-  i2c_current_position = 0;
-  connection_status = 0;
-  i2c_complete = 0;
+// Function that initializes i2c value read
+void i2c_send_read(int bytes_to_send, int bytes_to_receive, uint8_t *buffer) 
+{
+    i2c_buffer = buffer;
+    i2c_to_send_counter = bytes_to_send;
+    i2c_to_receive_counter = bytes_to_receive;
+    i2c_current_position = 0;
+    connection_status = 0;
+    i2c_complete = 0;
 
-  I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
-  I2C1->CR1 |= I2C_CR1_START;
-  I2C1->CCR = PCLK1_HZ / (I2C_SPEED_HZ << 1);
-  I2C1->TRISE = PCLK1_MHZ + 1;
+    I2C1->CR2 |= I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN;
+    I2C1->CR1 |= I2C_CR1_START;
+    I2C1->CCR = PCLK1_HZ / (I2C_SPEED_HZ << 1);
+    I2C1->TRISE = PCLK1_MHZ + 1;
 }
 
-void send(char *text) {
-    if ((DMA1_Stream6->CR & DMA_SxCR_EN) == 0 &&
-        (DMA1->HISR & DMA_HISR_TCIF6) == 0)
+// Function for usage when user wants to send text via USART
+// If DMA is free it sends immediately, otherwise it puts text into queue
+void send(char *text) 
+{
+    if ((DMA1_Stream6->CR & DMA_SxCR_EN) == 0 && (DMA1->HISR & DMA_HISR_TCIF6) == 0)
     {
         DMASend(text);
     }
@@ -94,13 +97,17 @@ void send(char *text) {
     }
 }
 
-void DMASend(char *text) {
+// Helper function for initializing DMA sending
+void DMASend(char *text) 
+{
     DMA1_Stream6->M0AR = (uint32_t)text;
     DMA1_Stream6->NDTR = strlen(text);
     DMA1_Stream6->CR |= DMA_SxCR_EN;
 }
 
-void interrupt(uint16_t interr, uint16_t exti_line, Button *button) {
+// Helper function for buttons readings
+void interrupt(uint16_t interr, uint16_t exti_line, Button *button) 
+{
     if (interr & exti_line)
     {
         uint8_t is_released = ((button->gpio->IDR >> button->pin) & 1) ^ button->is_reverse_logic;
@@ -110,7 +117,9 @@ void interrupt(uint16_t interr, uint16_t exti_line, Button *button) {
     }
 }
 
-void DMA1_Stream6_IRQHandler() {
+// DMA sending via USART
+void DMA1_Stream6_IRQHandler() 
+{
     uint32_t isr = DMA1->HISR;
     if (isr & DMA_HISR_TCIF6)
     {
@@ -126,101 +135,122 @@ void DMA1_Stream6_IRQHandler() {
     }
 }
 
-void EXTI15_10_IRQHandler(void) {
+// Reading of fire button
+void EXTI15_10_IRQHandler(void) 
+{
     uint16_t interr = EXTI->PR;
     interrupt(interr, EXTI_PR_PR13, &fire_button);
 }
 
-void I2C1_EV_IRQHandler() {
-  if (i2c_to_send_counter > 0) {
-    if (connection_status == 0 && (I2C1->SR1 & I2C_SR1_SB)) {
-      connection_status = 1;
-      I2C1->DR = LIS35DE_ADDR << 1;
-      return;
-    }
+// I2C value reading state machine
+void I2C1_EV_IRQHandler() 
+{
+    if (i2c_to_send_counter > 0) 
+    {
+        if (connection_status == 0 && (I2C1->SR1 & I2C_SR1_SB)) 
+            {
+            connection_status = 1;
+            I2C1->DR = LIS35DE_ADDR << 1;
+            return;
+        }
 
-    if (connection_status == 1 && (I2C1->SR1 & I2C_SR1_ADDR)) {
-      connection_status = 2;
-      I2C1->SR2;
+        if (connection_status == 1 && (I2C1->SR1 & I2C_SR1_ADDR)) 
+        {
+            connection_status = 2;
+            I2C1->SR2;
 
-      I2C1->DR = i2c_buffer[i2c_current_position];
-      i2c_current_position++;
-      i2c_to_send_counter--;
-      return;
-    }
+            I2C1->DR = i2c_buffer[i2c_current_position];
+            i2c_current_position++;
+            i2c_to_send_counter--;
+            return;
+        }
 
-    if (connection_status == 2 && (I2C1->SR1 & I2C_SR1_TXE)) {
-      I2C1->DR = i2c_buffer[i2c_current_position];
-      i2c_current_position++;
-      i2c_to_send_counter--;
-      return;
-    }
-  } 
-  else if (i2c_to_receive_counter > 0) {
+        if (connection_status == 2 && (I2C1->SR1 & I2C_SR1_TXE)) 
+        {
+            I2C1->DR = i2c_buffer[i2c_current_position];
+            i2c_current_position++;
+            i2c_to_send_counter--;
+            return;
+        }
+    } 
+    else if (i2c_to_receive_counter > 0) 
+    {
+        if (connection_status == 2 && (I2C1->SR1 & I2C_SR1_BTF)) 
+        {
+            I2C1->CR1 |= I2C_CR1_START;
+            connection_status = 3;
+            return;
+        }
 
-    if (connection_status == 2 && (I2C1->SR1 & I2C_SR1_BTF)) {
-      I2C1->CR1 |= I2C_CR1_START;
-      connection_status = 3;
-      return;
-    }
+        if (connection_status == 3 && (I2C1->SR1 & I2C_SR1_SB)) 
+        {
+            I2C1->DR = (LIS35DE_ADDR << 1) | 1U;
+            I2C1->CR1 &= ~I2C_CR1_ACK;
+            connection_status = 4;
+            return;
+        }
 
-    if (connection_status == 3 && (I2C1->SR1 & I2C_SR1_SB)) {
-      I2C1->DR = (LIS35DE_ADDR << 1) | 1U;
-      I2C1->CR1 &= ~I2C_CR1_ACK;
-      connection_status = 4;
-      return;
-    }
+        if (connection_status == 4 && (I2C1->SR1 & I2C_SR1_ADDR)) 
+        {
+            I2C1->SR2;
+            I2C1->CR1 |= I2C_CR1_STOP;
+            connection_status = 5;
+            return;
+        }
 
-    if (connection_status == 4 && (I2C1->SR1 & I2C_SR1_ADDR)) {
-      I2C1->SR2;
-      I2C1->CR1 |= I2C_CR1_STOP;
-      connection_status = 5;
-      return;
+        if (connection_status == 5 && (I2C1->SR1 & I2C_SR1_RXNE)) 
+        {
+            i2c_to_receive_counter--;
+            i2c_value = I2C1->DR;
+            send(tab[i2c_value]);
+            i2c_complete = 1;
+            return;
+        }
+    } 
+    else 
+    {
+        connection_status = 0;
+        I2C1->CR1 |= I2C_CR1_STOP;
+        I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
+        i2c_complete = 1;
+        return ;
     }
-
-    if (connection_status == 5 && (I2C1->SR1 & I2C_SR1_RXNE)) {
-      i2c_to_receive_counter--;
-      i2c_value = I2C1->DR;
-      send(tab[i2c_value]);
-      i2c_complete = 1;
-      return;
-    }
-  } 
-  else {
-    connection_status = 0;
-    I2C1->CR1 |= I2C_CR1_STOP;
-    I2C1->CR2 &= ~(I2C_CR2_ITBUFEN | I2C_CR2_ITEVTEN | I2C_CR2_ITERREN);
-    i2c_complete = 1;
-    return ;
-  }
 }
 
-void I2C1_ER_IRQHandler() {
-  send("Error");
+// Error handler
+void I2C1_ER_IRQHandler() 
+{
+    send("Error");
 }
 
-void TIM3_IRQHandler(void) {
-  uint32_t it_status = TIM3->SR & TIM3->DIER;
+// Timer which initializes readings from IMU in order X -> Y -> Z
+void TIM3_IRQHandler(void) 
+{
+    uint32_t it_status = TIM3->SR & TIM3->DIER;
 
-  if (it_status & TIM_SR_UIF) {
-    send("X");
-    i2c_send_read(1, 1, registerX);
-    TIM3->SR = ~TIM_SR_UIF;
-  }
-  if (it_status & TIM_SR_CC1IF) {
-    send("Y");
-    i2c_send_read(1, 1, registerY);
-    TIM3->SR = ~TIM_SR_CC1IF;
-  }
-  if (it_status & TIM_SR_CC2IF) {
-    send("Z");
-    i2c_send_read(1, 1, registerZ);
-    send("P");
-    if (is_fire_pressed)
-      send("1\r\n");
-    else
-      send("0\r\n");
+    if (it_status & TIM_SR_UIF) 
+    {
+        send("X");
+        i2c_send_read(1, 1, registerX);
+        TIM3->SR = ~TIM_SR_UIF;
+    }
+    if (it_status & TIM_SR_CC1IF) 
+    {
+        send("Y");
+        i2c_send_read(1, 1, registerY);
+        TIM3->SR = ~TIM_SR_CC1IF;
+    }
+    if (it_status & TIM_SR_CC2IF) 
+    {
+        send("Z");
+        i2c_send_read(1, 1, registerZ);
+        send("P");
 
-    TIM3->SR = ~TIM_SR_CC2IF;
-  }
+        if (is_fire_pressed)
+            send("1\r\n");
+        else
+            send("0\r\n");
+
+        TIM3->SR = ~TIM_SR_CC2IF;
+    }
 }
