@@ -1,4 +1,4 @@
-# STM32GameController
+# GameControllerSTM32
 Repository contains code for microcontroller side of simple game controller.
 
 Code was developed using `STM32F411xE` core and several additional electronic modules.
