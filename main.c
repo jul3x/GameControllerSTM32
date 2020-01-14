@@ -230,6 +230,13 @@ void TIM3_IRQHandler(void)
 
     if (it_status & TIM_SR_UIF) 
     {
+        send("\r\nP");
+
+        if (is_fire_pressed)
+            send("1");
+        else
+            send("0");
+
         send("X");
         i2c_send_read(1, 1, registerX);
         TIM3->SR = ~TIM_SR_UIF;
@@ -244,12 +251,6 @@ void TIM3_IRQHandler(void)
     {
         send("Z");
         i2c_send_read(1, 1, registerZ);
-        send("P");
-
-        if (is_fire_pressed)
-            send("1\r\n");
-        else
-            send("0\r\n");
 
         TIM3->SR = ~TIM_SR_CC2IF;
     }
